@@ -47,103 +47,123 @@ public class InGameDigitalClockModule : EverestModule {
     }
 
 
-    // Speedrun timer display render method
+    #region Speedrun timer display render methods
+    private float renderRealTimeClock(float xPos, float yPos, float hideSecondsXOffset, MTexture bg) {
+        float xOffset = Settings.showSeconds ? 0 : hideSecondsXOffset;
+
+        bg.Draw(new Vector2(xPos + xOffset, yPos));
+        DrawRealTime(new Vector2(xPos + 32f, yPos + 44f), getTimeString(Settings.showSeconds));
+
+        return 65f;
+    }
+
+
+    private float renderAdditionalClock(float xPos, float yPos, MTexture bg, Wiggler wiggler, Level level, Session session) {
+        if (Settings.additionalClock == InGameDigitalClockModuleSettings.AdditionalClockOptions.Chapter)
+        {
+            // Separate Chapter Clock
+            string chapterTimeString = TimeSpan.FromTicks(session.Time).ShortGameplayFormat();
+
+            bg.Draw(new Vector2(xPos, yPos));
+            SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), chapterTimeString, 1f + wiggler.Value * 0.15f, session.StartedFromBeginning, level.Completed, session.BeatBestTime);
+
+            return 65f;
+        }
+        else if (Settings.additionalClock == InGameDigitalClockModuleSettings.AdditionalClockOptions.File)
+        {
+            // Separate File Clock
+            TimeSpan fileTimeSpan = TimeSpan.FromTicks(SaveData.Instance.Time);
+            int fileTime = (int)fileTimeSpan.TotalHours;
+            int extraWidth = ((fileTime < 10) ? 64 : ((fileTime < 100) ? 96 : 128));
+            string fileTimeString = fileTime + fileTimeSpan.ToString("\\:mm\\:ss\\.fff");
+            TimeSpan chapterTimeSpan = TimeSpan.FromTicks(session.Time);
+            string chapterTimeString = ((!(chapterTimeSpan.TotalHours >= 1.0)) ? chapterTimeSpan.ToString("mm\\:ss") : ((int)chapterTimeSpan.TotalHours + ":" + chapterTimeSpan.ToString("mm\\:ss")));
+
+            Draw.Rect(0, yPos, extraWidth + 2, 38f, Color.Black);
+            bg.Draw(new Vector2(xPos + (float)extraWidth, yPos));
+            SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), fileTimeString);
+
+            bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.White, 0.6f);
+            SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), chapterTimeString, (1f + wiggler.Value * 0.15f) * 0.6f, session.StartedFromBeginning, level.Completed, session.BeatBestTime, 0.6f);
+
+            return 85f;
+        }
+
+        return 0f;
+    }
+
+
     private void modSpeedrunTimerDisplayRender(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
 
-        if (Settings.displayDigitalClock)
+        if (!Settings.displayDigitalClock)
         {
-            Scene baseScene = self.Scene;
-            MTexture bg = self.bg;
-            Wiggler wiggler = self.wiggler;
-            Level level = baseScene as Level;
-            Session session = level.Session;
+            orig(self);
+            return;
+        }
 
-            float xPos = 0f;
-            float yPos = self.Y;
-            float hideSecondsXOffset = -55f;
+        Scene baseScene = self.Scene;
+        MTexture bg = self.bg;
+        Wiggler wiggler = self.wiggler;
+        Level level = baseScene as Level;
+        Session session = level.Session;
 
-            if (Settings.displaySeparately)
-            {
-                // Real Time Clock
-                float xOffset = Settings.showSeconds ? 0 : hideSecondsXOffset;
+        float xPos = 0f;
+        float yPos = self.Y;
+        float hideSecondsXOffset = -55f;
 
-                bg.Draw(new Vector2(xPos + xOffset, yPos));
-                DrawRealTime(new Vector2(xPos + 32f, yPos + 44f), getTimeString(Settings.showSeconds));
-
-                yPos += 65f;
-
-                if (Settings.additionalClock == InGameDigitalClockModuleSettings.AdditionalClockOptions.Chapter)
-                {
-                    // Separate Chapter Clock
-                    string chapterTimeString = TimeSpan.FromTicks(session.Time).ShortGameplayFormat();
-
-                    bg.Draw(new Vector2(xPos, yPos));
-                    SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), chapterTimeString, 1f + wiggler.Value * 0.15f, session.StartedFromBeginning, level.Completed, session.BeatBestTime);
-                }
-                else if (Settings.additionalClock == InGameDigitalClockModuleSettings.AdditionalClockOptions.File)
-                {
-                    // Separate File Clock
-                    TimeSpan fileTimeSpan = TimeSpan.FromTicks(SaveData.Instance.Time);
-                    int fileTime = (int)fileTimeSpan.TotalHours;
-                    int extraWidth = ((fileTime < 10) ? 64 : ((fileTime < 100) ? 96 : 128));
-                    string fileTimeString = fileTime + fileTimeSpan.ToString("\\:mm\\:ss\\.fff");
-                    TimeSpan chapterTimeSpan = TimeSpan.FromTicks(session.Time);
-                    string chapterTimeString = ((!(chapterTimeSpan.TotalHours >= 1.0)) ? chapterTimeSpan.ToString("mm\\:ss") : ((int)chapterTimeSpan.TotalHours + ":" + chapterTimeSpan.ToString("mm\\:ss")));
-                        
-                    Draw.Rect(0, yPos, extraWidth + 2, 38f, Color.Black);
-                    bg.Draw(new Vector2(xPos + (float)extraWidth, yPos));
-                    SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), fileTimeString);
-
-                    bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.White, 0.6f);
-                    SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), chapterTimeString, (1f + wiggler.Value * 0.15f) * 0.6f, session.StartedFromBeginning, level.Completed, session.BeatBestTime, 0.6f);
-                }
+        if (Settings.displaySeparately)
+        {
+            if (Settings.swapClocks) {
+                yPos += renderAdditionalClock(xPos, yPos, bg, wiggler, level, session);
+                renderRealTimeClock(xPos, yPos, hideSecondsXOffset, bg);
             }
             else
             {
-                if (Settings.clockType == InGameDigitalClockModuleSettings.ClockTypeOptions.RealTimeAndChapterTime)
-                {
-                    // Real Time & Chapter Time Clock
-                    float xOffset = Settings.showSeconds ? 0 : hideSecondsXOffset;
-                    TimeSpan chapterTimeSpan = TimeSpan.FromTicks(session.Time);
-                    string chapterTimeString = ((!(chapterTimeSpan.TotalHours >= 1.0)) ? chapterTimeSpan.ToString("mm\\:ss") : ((int)chapterTimeSpan.TotalHours + ":" + chapterTimeSpan.ToString("mm\\:ss")));
-
-                    bg.Draw(new Vector2(xPos + xOffset, yPos));
-                    DrawRealTime(new Vector2(xPos + 32f, yPos + 44f), getTimeString(Settings.showSeconds));
-
-                    bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.Black, 0.6f);
-                    SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), chapterTimeString, (1f + wiggler.Value * 0.15f) * 0.6f, session.StartedFromBeginning, level.Completed, session.BeatBestTime, 0.6f);
-                }
-                else if (Settings.clockType == InGameDigitalClockModuleSettings.ClockTypeOptions.ChapterTimeAndRealTime)
-                {
-                    // Chapter Time & Real Time Clock
-                    string chapterTimeString = TimeSpan.FromTicks(session.Time).ShortGameplayFormat();
-
-                    bg.Draw(new Vector2(xPos, yPos));
-                    SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), chapterTimeString, 1f + wiggler.Value * 0.15f, session.StartedFromBeginning, level.Completed, session.BeatBestTime);
-
-                    bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.Black, 0.6f);
-                    DrawRealTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), getTimeString(false), 0.6f, 0.6f);
-                }
-                else
-                {
-                    // File Time & Real Time Clock
-                    TimeSpan fileTimeSpan = TimeSpan.FromTicks(SaveData.Instance.Time);
-                    int fileTime = (int)fileTimeSpan.TotalHours;
-                    int extraWidth = ((fileTime < 10) ? 64 : ((fileTime < 100) ? 96 : 128));
-                    string fileTimeString = fileTime + fileTimeSpan.ToString("\\:mm\\:ss\\.fff");
-
-                    Draw.Rect(xPos, yPos, extraWidth + 2, 38f, Color.Black);
-                    bg.Draw(new Vector2(xPos + (float)extraWidth, yPos));
-                    SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), fileTimeString);
-
-                    bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.Black, 0.6f);
-                    DrawRealTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), getTimeString(false), 0.6f, 0.6f);
-                }
+                yPos += renderRealTimeClock(xPos, yPos, hideSecondsXOffset, bg);
+                renderAdditionalClock(xPos, yPos, bg, wiggler, level, session);
             }
         }
         else
         {
-            orig(self);
+            if (Settings.clockType == InGameDigitalClockModuleSettings.ClockTypeOptions.RealTimeAndChapterTime)
+            {
+                // Real Time & Chapter Time Clock
+                float xOffset = Settings.showSeconds ? 0 : hideSecondsXOffset;
+                TimeSpan chapterTimeSpan = TimeSpan.FromTicks(session.Time);
+                string chapterTimeString = ((!(chapterTimeSpan.TotalHours >= 1.0)) ? chapterTimeSpan.ToString("mm\\:ss") : ((int)chapterTimeSpan.TotalHours + ":" + chapterTimeSpan.ToString("mm\\:ss")));
+
+                bg.Draw(new Vector2(xPos + xOffset, yPos));
+                DrawRealTime(new Vector2(xPos + 32f, yPos + 44f), getTimeString(Settings.showSeconds));
+
+                bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.Black, 0.6f);
+                SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), chapterTimeString, (1f + wiggler.Value * 0.15f) * 0.6f, session.StartedFromBeginning, level.Completed, session.BeatBestTime, 0.6f);
+            }
+            else if (Settings.clockType == InGameDigitalClockModuleSettings.ClockTypeOptions.ChapterTimeAndRealTime)
+            {
+                // Chapter Time & Real Time Clock
+                string chapterTimeString = TimeSpan.FromTicks(session.Time).ShortGameplayFormat();
+
+                bg.Draw(new Vector2(xPos, yPos));
+                SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), chapterTimeString, 1f + wiggler.Value * 0.15f, session.StartedFromBeginning, level.Completed, session.BeatBestTime);
+
+                bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.Black, 0.6f);
+                DrawRealTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), getTimeString(false), 0.6f, 0.6f);
+            }
+            else
+            {
+                // File Time & Real Time Clock
+                TimeSpan fileTimeSpan = TimeSpan.FromTicks(SaveData.Instance.Time);
+                int fileTime = (int)fileTimeSpan.TotalHours;
+                int extraWidth = ((fileTime < 10) ? 64 : ((fileTime < 100) ? 96 : 128));
+                string fileTimeString = fileTime + fileTimeSpan.ToString("\\:mm\\:ss\\.fff");
+
+                Draw.Rect(xPos, yPos, extraWidth + 2, 38f, Color.Black);
+                bg.Draw(new Vector2(xPos + (float)extraWidth, yPos));
+                SpeedrunTimerDisplay.DrawTime(new Vector2(xPos + 32f, yPos + 44f), fileTimeString);
+
+                bg.Draw(new Vector2(xPos, yPos + 38f), Vector2.Zero, Color.Black, 0.6f);
+                DrawRealTime(new Vector2(xPos + 32f, yPos + 40f + 26.400002f), getTimeString(false), 0.6f, 0.6f);
+            }
         }
     }
 
@@ -204,9 +224,10 @@ public class InGameDigitalClockModule : EverestModule {
 
         return text;
     }
+    #endregion
 
 
-    // Total strawberries display update method
+    #region Total strawberries display update method
     private void modTotalStrawberriesDisplayUpdate(On.Celeste.TotalStrawberriesDisplay.orig_Update orig, TotalStrawberriesDisplay self)
     {
         orig(self);
@@ -236,4 +257,5 @@ public class InGameDigitalClockModule : EverestModule {
 
         self.Y = yPos;
     }
+    #endregion
 }

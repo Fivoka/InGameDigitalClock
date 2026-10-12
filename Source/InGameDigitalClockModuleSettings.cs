@@ -150,6 +150,8 @@ public class InGameDigitalClockModuleSettings : EverestModuleSettings
         Chapter,
         File
     }
+    public bool swapClocks { get; set; } = false;
+
     public ClockTypeOptions clockType { get; set; } = ClockTypeOptions.RealTimeAndChapterTime;
     public enum ClockTypeOptions
     {
@@ -178,6 +180,7 @@ public class InGameDigitalClockModuleSettings : EverestModuleSettings
         TextMenu.SubHeader displayModeSubHeader;
         TextMenu.OnOff displaySeparatelyOnOff;
         TextMenu.Slider additionalClockSlider;
+        TextMenu.OnOff swapClocksOnOff;
         TextMenu.Slider clockTypeSlider;
 
         TextMenu.SubHeader clockSettingsSubHeader;
@@ -189,6 +192,7 @@ public class InGameDigitalClockModuleSettings : EverestModuleSettings
         ModSetting displayModeSubHeaderModSetting;
         ModSetting displaySeparatelyModSetting;
         ModSetting additionalClockModSetting;
+        ModSetting swapClocksModSetting;
         ModSetting clockTypeModSetting;
 
         ModSetting clockSettingsSubHeaderModSetting;
@@ -218,6 +222,10 @@ public class InGameDigitalClockModuleSettings : EverestModuleSettings
             0, 2,
             additionalClockEnumInt);
         additionalClockSlider.Change(enumInt => { additionalClock = (AdditionalClockOptions)enumInt; });
+
+        // Swap clocks
+        swapClocksOnOff = new TextMenu.OnOff(Dialog.Clean("InGameDigitalClock_SwapClocks_Setting"), swapClocks);
+        swapClocksOnOff.Change(enabled => { swapClocks = enabled; });
 
         // Clock Type
         int clockTypeEnumInt = (int)clockType;
@@ -275,6 +283,12 @@ public class InGameDigitalClockModuleSettings : EverestModuleSettings
             new List<SettingCondition> { settingConditionsList[0], settingConditionsList[1] }
         );
 
+        // Swap Clocks
+        swapClocksModSetting = new ModSetting(
+            swapClocksOnOff,
+            new List<SettingCondition> { settingConditionsList[0], settingConditionsList[1] }
+        );
+
         // Clock Type
         clockTypeModSetting = new ModSetting(
             clockTypeSlider,
@@ -314,6 +328,7 @@ public class InGameDigitalClockModuleSettings : EverestModuleSettings
         // DisplaySeparately sub-settings list
         List<ModSetting> displaySeparatelySubSettingsList = new List<ModSetting> {
             additionalClockModSetting,
+            swapClocksModSetting,
             clockTypeModSetting
         };
 
