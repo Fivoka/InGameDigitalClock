@@ -1,0 +1,6 @@
+- Name: InGameDigitalClock
+  Version: 1.0.1
+  DLL: bin/InGameDigitalClock.dll
+  Dependencies:
+    - Name: EverestCore
+      Version: 1.4739.0

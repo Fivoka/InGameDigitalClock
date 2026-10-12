@@ -1,0 +1,17 @@
+InGameDigitalClock_DisplayMode_Header= Display Mode
+InGameDigitalClock_ClockSettings_Header= Clock Settings
+
+InGameDigitalClock_DisplayDigitalClock_Setting= Display Digital Clock
+InGameDigitalClock_DisplaySeparately_Setting= Display Separately
+InGameDigitalClock_AdditionalClock_Setting= Additional Clock
+InGameDigitalClock_ClockType_Setting= Clock Type
+InGameDigitalClock_ShowSeconds_Setting= Show Seconds
+InGameDigitalClock_BlinkColon_Setting= Blink Colon
+
+InGameDigitalClock_AdditionalClock_Setting_None_Option= None
+InGameDigitalClock_AdditionalClock_Setting_Chapter_Option= Chapter
+InGameDigitalClock_AdditionalClock_Setting_File_Option= File
+
+InGameDigitalClock_ClockType_Setting_RealTimeAndChapterTime_Option= Real Time & Chapter Time
+InGameDigitalClock_ClockType_Setting_ChapterTimeAndRealTime_Option= Chapter Time & Real Time
+InGameDigitalClock_ClockType_Setting_FileTimeAndRealTime_Option= File Time & Real Time
